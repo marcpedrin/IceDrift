@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+dist/
+build/
+node/
+node-v20.11.1-win-x64.zip
+Polaris/
+**/.git.nested-backup/
+*.log

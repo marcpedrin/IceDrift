@@ -1,0 +1,230 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   IceNavigator Global Styles
+   Dark maritime theme with glassmorphism and subtle animations
+═══════════════════════════════════════════════════════════════════════════ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --navy-900: #040810;
+  --navy-800: #070d1a;
+  --navy-700: #0a1222;
+  --navy-600: #0d1a2e;
+  --navy-500: #122040;
+
+  --ice-100: #dbeeff;
+  --ice-300: #82c4ff;
+  --ice-400: #40a5f5;
+  --ice-500: #1a8adc;
+
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0, 229, 255, 0.15);
+  --safe: #00e676;
+  --danger: #ff4444;
+  --warning: #ffaa00;
+
+  --glass-bg: rgba(7, 13, 26, 0.75);
+  --glass-border: rgba(0, 229, 255, 0.15);
+  --glass-blur: blur(12px);
+
+  --text-primary: #e8f4ff;
+  --text-secondary: #8ab4cc;
+  --text-muted: #4a6880;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--navy-900);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Cesium Canvas ──────────────────────────────────────────────────────────── */
+.cesium-widget canvas {
+  border-radius: 0;
+}
+
+/* Hide Cesium default credits bar */
+.cesium-widget-credits {
+  display: none !important;
+}
+
+/* ── Glassmorphism Base ─────────────────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-strong {
+  background: rgba(7, 13, 26, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy-800);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.5);
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────────── */
+.btn-primary {
+  @apply flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  background: linear-gradient(135deg, #1a8adc 0%, #00b8d4 100%);
+  color: white;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  cursor: pointer;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2099ef 0%, #00d4f0 100%);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  @apply flex items-center justify-center gap-2 px-3 py-1.5 rounded-md font-medium transition-all duration-150;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.btn-ghost:hover {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: var(--glass-border);
+  color: var(--text-primary);
+}
+
+/* ── Input Fields ───────────────────────────────────────────────────────────── */
+.input-field {
+  @apply w-full px-3 py-2 rounded-lg text-sm transition-all duration-150;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  color: var(--text-primary);
+  outline: none;
+}
+.input-field:focus {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+}
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Labels ─────────────────────────────────────────────────────────────────── */
+.label {
+  @apply block text-xs font-medium mb-1;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Section Headers ────────────────────────────────────────────────────────── */
+.section-title {
+  @apply text-xs font-semibold mb-3 flex items-center gap-2;
+  color: var(--cyan);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 229, 255, 0.3), transparent);
+}
+
+/* ── Risk Badge ─────────────────────────────────────────────────────────────── */
+.risk-badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+}
+.risk-low    { background: rgba(0, 230, 118, 0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+.risk-medium { background: rgba(255,170,0,0.15);   color: #ffaa00; border: 1px solid rgba(255,170,0,0.3); }
+.risk-high   { background: rgba(255,68,68,0.15);   color: #ff4444; border: 1px solid rgba(255,68,68,0.3); }
+
+/* ── Pulse Animation ────────────────────────────────────────────────────────── */
+@keyframes pulse-cyan {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(0, 229, 255, 0); }
+}
+.pulse-cyan { animation: pulse-cyan 2s infinite; }
+
+/* ── Glow effects ───────────────────────────────────────────────────────────── */
+.glow-cyan { text-shadow: 0 0 12px rgba(0, 229, 255, 0.6); }
+.glow-green { text-shadow: 0 0 12px rgba(0, 230, 118, 0.6); }
+
+/* ── Spinner ────────────────────────────────────────────────────────────────── */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  @apply w-5 h-5 rounded-full border-2;
+  border-color: rgba(0, 229, 255, 0.2);
+  border-top-color: var(--cyan);
+  animation: spin-slow 0.8s linear infinite;
+}
+
+/* ── Tooltip ────────────────────────────────────────────────────────────────── */
+.tooltip {
+  @apply absolute z-50 px-2 py-1 rounded text-xs pointer-events-none;
+  background: rgba(7, 13, 26, 0.95);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ── Popup Modal ────────────────────────────────────────────────────────────── */
+.popup-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background: rgba(4, 8, 16, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.popup-modal {
+  @apply glass-strong rounded-xl overflow-hidden;
+  max-width: 480px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 0 60px rgba(0, 229, 255, 0.1), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Recharts overrides ─────────────────────────────────────────────────────── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px !important;
+}

@@ -1,0 +1,40 @@
+# Web & API
+fastapi
+uvicorn[standard]
+websockets
+python-multipart
+
+# Config & Validation
+pydantic
+pydantic-settings
+python-dotenv
+
+# Data & ML
+numpy
+scipy
+pandas
+xarray
+netCDF4
+h5py
+h5netcdf
+
+# Geospatial
+geopandas
+shapely
+pyproj
+rasterio
+
+# ML Models
+torch
+torchvision
+
+# Utilities
+httpx
+requests
+aiofiles
+aiohttp
+redis
+cdsapi
+loguru
+tenacity
+orjson
