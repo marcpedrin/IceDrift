@@ -30,11 +30,17 @@ export function IcebergLayer({
   const icebergMapRef = useRef<Map<string, Iceberg>>(new Map());
 
   useEffect(() => {
-    if (!viewer) return;
+    if (!viewer || viewer.isDestroyed()) return;
 
     // Clean up previous
-    if (dsRef.current) viewer.dataSources.remove(dsRef.current, true);
-    if (handlerRef.current) handlerRef.current.destroy();
+    if (dsRef.current) {
+      viewer.dataSources.remove(dsRef.current, true);
+      dsRef.current = null;
+    }
+    if (handlerRef.current) {
+      if (!handlerRef.current.isDestroyed()) handlerRef.current.destroy();
+      handlerRef.current = null;
+    }
 
     const ds = new Cesium.CustomDataSource('icebergs');
     icebergMapRef.current = new Map();
@@ -133,8 +139,14 @@ export function IcebergLayer({
     handlerRef.current = handler;
 
     return () => {
-      if (dsRef.current) viewer.dataSources.remove(dsRef.current, true);
-      if (handlerRef.current) handlerRef.current.destroy();
+      if (dsRef.current && !viewer.isDestroyed()) {
+        viewer.dataSources.remove(dsRef.current, true);
+        dsRef.current = null;
+      }
+      if (handlerRef.current) {
+        if (!handlerRef.current.isDestroyed()) handlerRef.current.destroy();
+        handlerRef.current = null;
+      }
     };
   }, [viewer, icebergs, showTrajectories, showUncertainty]); // eslint-disable-line
 

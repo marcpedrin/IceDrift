@@ -44,14 +44,9 @@ function App() {
     isLoadingRoute: false,
   });
 
+  // Single shared viewer ref passed to CesiumGlobe which populates it
   const viewerRef = useRef<Cesium.Viewer | null>(null);
-  const { viewerRef: cesiumHookRef, zoomToIceberg, zoomToRoute } = useCesiumViewer();
-
-  // Sync viewer refs
-  const setViewer = useCallback((v: Cesium.Viewer) => {
-    viewerRef.current = v;
-    cesiumHookRef.current = v;
-  }, [cesiumHookRef]);
+  const { zoomToIceberg, zoomToRoute } = useCesiumViewer();
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -144,12 +139,15 @@ function App() {
 
   const handleGlobeClick = useCallback((lat: number, lon: number) => {
     // First click = start, second = end
-    if (!state.startPoint) {
-      setState((s) => ({ ...s, startPoint: { lat, lon } }));
-    } else if (!state.endPoint) {
-      setState((s) => ({ ...s, endPoint: { lat, lon } }));
-    }
-  }, [state.startPoint, state.endPoint]);
+    setState((s) => {
+      if (!s.startPoint) {
+        return { ...s, startPoint: { lat, lon } };
+      } else if (!s.endPoint) {
+        return { ...s, endPoint: { lat, lon } };
+      }
+      return s;
+    });
+  }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
 

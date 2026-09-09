@@ -24,10 +24,16 @@ export function ShipLayer({ viewer, ships, onShipClick }: ShipLayerProps) {
   const shipMapRef = useRef<Map<string, Ship>>(new Map());
 
   useEffect(() => {
-    if (!viewer) return;
+    if (!viewer || viewer.isDestroyed()) return;
 
-    if (dsRef.current) viewer.dataSources.remove(dsRef.current, true);
-    if (handlerRef.current) handlerRef.current.destroy();
+    if (dsRef.current) {
+      viewer.dataSources.remove(dsRef.current, true);
+      dsRef.current = null;
+    }
+    if (handlerRef.current) {
+      if (!handlerRef.current.isDestroyed()) handlerRef.current.destroy();
+      handlerRef.current = null;
+    }
 
     const ds = new Cesium.CustomDataSource('ships');
     shipMapRef.current = new Map();
@@ -93,9 +99,10 @@ export function ShipLayer({ viewer, ships, onShipClick }: ShipLayerProps) {
           polyline: {
             positions: histPositions,
             width: 1,
-            material: new Cesium.PolylineTrailMaterialProperty
-              ? new Cesium.PolylineTrailMaterialProperty(color.withAlpha(0.3))
-              : color.withAlpha(0.3),
+            material: new Cesium.PolylineDashMaterialProperty({
+              color: color.withAlpha(0.35),
+              dashLength: 8,
+            }),
             clampToGround: true,
           },
         });
@@ -121,8 +128,14 @@ export function ShipLayer({ viewer, ships, onShipClick }: ShipLayerProps) {
     handlerRef.current = handler;
 
     return () => {
-      if (dsRef.current) viewer.dataSources.remove(dsRef.current, true);
-      if (handlerRef.current) handlerRef.current.destroy();
+      if (dsRef.current && !viewer.isDestroyed()) {
+        viewer.dataSources.remove(dsRef.current, true);
+        dsRef.current = null;
+      }
+      if (handlerRef.current) {
+        if (!handlerRef.current.isDestroyed()) handlerRef.current.destroy();
+        handlerRef.current = null;
+      }
     };
   }, [viewer, ships]); // eslint-disable-line
 

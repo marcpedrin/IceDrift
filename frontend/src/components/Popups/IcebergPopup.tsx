@@ -21,15 +21,13 @@ function getRiskClass(sizeKm2: number) {
 }
 
 export const IcebergPopup: React.FC<IcebergPopupProps> = ({ iceberg, onClose }) => {
-  if (!iceberg) return null;
-
   // Prepare trajectory chart data
-  const chartData = iceberg.trajectory.slice(0, 12).map((pt, i) => ({
+  const chartData = iceberg ? iceberg.trajectory.slice(0, 12).map((pt, i) => ({
     step: `+${i * 6}h`,
     lat: pt.lat.toFixed(2),
     lon: pt.lon.toFixed(2),
     uncertainty: pt.uncertainty_radius_km,
-  }));
+  })) : [];
 
   return (
     <AnimatePresence>

@@ -1,29 +1,30 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
+import { ErrorBoundary } from './ErrorBoundary';
 import './index.css';
 
-// Initialize Cesium Ion token
+// ── Cesium Ion token (optional – if blank/placeholder, OSM free imagery used) ─
 import * as Cesium from 'cesium';
-Cesium.Ion.defaultAccessToken =
-  import.meta.env.VITE_CESIUM_TOKEN ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYWE1OWUxNy1mMWZiLTQzYjYtYTQ0OS1kMWFjYmFkNjc5YzciLCJpZCI6MjU5LCJpYXQiOjE1NjkyOTQ5OTF9.TyaBlRVEZe1teSWMQaHkV1h0MZMaU1tBSVl4ER5n7eM';
+const cesiumToken = import.meta.env.VITE_CESIUM_TOKEN;
+if (cesiumToken && cesiumToken !== 'your_cesium_ion_access_token' && cesiumToken.length > 20) {
+  Cesium.Ion.defaultAccessToken = cesiumToken;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     },
   },
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
-  </React.StrictMode>
+  </ErrorBoundary>
 );

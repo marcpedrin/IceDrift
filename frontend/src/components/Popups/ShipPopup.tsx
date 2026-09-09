@@ -37,10 +37,8 @@ function formatCourse(deg: number) {
 }
 
 export const ShipPopup: React.FC<ShipPopupProps> = ({ ship, onClose }) => {
-  if (!ship) return null;
-
-  const color = SHIP_TYPE_COLORS[ship.ship_type] ?? '#808080';
-  const icon = SHIP_TYPE_ICONS[ship.ship_type] ?? '🚤';
+  const color = ship ? (SHIP_TYPE_COLORS[ship.ship_type] ?? '#808080') : '#808080';
+  const icon = ship ? (SHIP_TYPE_ICONS[ship.ship_type] ?? '🚤') : '🚤';
 
   return (
     <AnimatePresence>

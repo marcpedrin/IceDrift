@@ -1,20 +1,12 @@
 import { useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 
-export interface CesiumViewerRef {
-  viewer: Cesium.Viewer | null;
-}
-
 export function useCesiumViewer() {
   const viewerRef = useRef<Cesium.Viewer | null>(null);
 
-  const setViewer = useCallback((viewer: Cesium.Viewer) => {
-    viewerRef.current = viewer;
-  }, []);
-
   const flyToAntarctic = useCallback(() => {
     const viewer = viewerRef.current;
-    if (!viewer) return;
+    if (!viewer || viewer.isDestroyed()) return;
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(0, -70, 8_000_000),
       orientation: { heading: 0, pitch: Cesium.Math.toRadians(-90), roll: 0 },
@@ -25,7 +17,7 @@ export function useCesiumViewer() {
   const flyToPosition = useCallback(
     (lat: number, lon: number, altitudeM = 500_000, duration = 2) => {
       const viewer = viewerRef.current;
-      if (!viewer) return;
+      if (!viewer || viewer.isDestroyed()) return;
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(lon, lat, altitudeM),
         duration,
@@ -40,7 +32,7 @@ export function useCesiumViewer() {
 
   const zoomToRoute = useCallback((waypoints: { lat: number; lon: number }[]) => {
     const viewer = viewerRef.current;
-    if (!viewer || waypoints.length === 0) return;
+    if (!viewer || viewer.isDestroyed() || waypoints.length === 0) return;
 
     const positions = waypoints.map((wp) =>
       Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat)
@@ -56,7 +48,7 @@ export function useCesiumViewer() {
   const screenToLatLon = useCallback(
     (x: number, y: number): { lat: number; lon: number } | null => {
       const viewer = viewerRef.current;
-      if (!viewer) return null;
+      if (!viewer || viewer.isDestroyed()) return null;
       const ray = viewer.camera.getPickRay(new Cesium.Cartesian2(x, y));
       if (!ray) return null;
       const pos = viewer.scene.globe.pick(ray, viewer.scene);
@@ -72,7 +64,6 @@ export function useCesiumViewer() {
 
   return {
     viewerRef,
-    setViewer,
     flyToAntarctic,
     flyToPosition,
     zoomToIceberg,

@@ -18,8 +18,11 @@ export function RouteLayer({ viewer, route, onRouteClick }: RouteLayerProps) {
   const dsRef = useRef<Cesium.CustomDataSource | null>(null);
 
   useEffect(() => {
-    if (!viewer || !route) return;
-    if (dsRef.current) viewer.dataSources.remove(dsRef.current, true);
+    if (!viewer || viewer.isDestroyed() || !route) return;
+    if (dsRef.current && !viewer.isDestroyed()) {
+      viewer.dataSources.remove(dsRef.current, true);
+      dsRef.current = null;
+    }
 
     const ds = new Cesium.CustomDataSource('routes');
 
@@ -100,7 +103,10 @@ export function RouteLayer({ viewer, route, onRouteClick }: RouteLayerProps) {
     dsRef.current = ds;
 
     return () => {
-      if (dsRef.current) viewer.dataSources.remove(dsRef.current, true);
+      if (dsRef.current && !viewer.isDestroyed()) {
+        viewer.dataSources.remove(dsRef.current, true);
+        dsRef.current = null;
+      }
     };
   }, [viewer, route]); // eslint-disable-line
 

@@ -33,11 +33,12 @@ export function IceHeatmapLayer({ viewer, cells, opacity }: IceHeatmapLayerProps
   const dsRef = useRef<Cesium.CustomDataSource | null>(null);
 
   useEffect(() => {
-    if (!viewer || cells.length === 0) return;
+    if (!viewer || viewer.isDestroyed() || cells.length === 0) return;
 
     // Remove previous
     if (dsRef.current) {
       viewer.dataSources.remove(dsRef.current);
+      dsRef.current = null;
     }
 
     const ds = new Cesium.CustomDataSource('ice-heatmap');
@@ -67,7 +68,7 @@ export function IceHeatmapLayer({ viewer, cells, opacity }: IceHeatmapLayerProps
     dsRef.current = ds;
 
     return () => {
-      if (dsRef.current) {
+      if (dsRef.current && !viewer.isDestroyed()) {
         viewer.dataSources.remove(dsRef.current, true);
         dsRef.current = null;
       }

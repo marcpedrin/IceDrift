@@ -11,16 +11,14 @@ interface RoutePopupProps {
 }
 
 export const RoutePopup: React.FC<RoutePopupProps> = ({ route, onClose }) => {
-  if (!route) return null;
-
-  const riskData = [
+  const riskData = route ? [
     { name: 'Ice', value: Math.round(route.risk_breakdown.ice_risk * 100), color: '#40a5f5' },
     { name: 'Iceberg', value: Math.round(route.risk_breakdown.iceberg_risk * 100), color: '#00e5ff' },
     { name: 'Bathymetry', value: Math.round(route.risk_breakdown.bathymetry_risk * 100), color: '#7fb3ff' },
     { name: 'Weather', value: Math.round(route.risk_breakdown.weather_risk * 100), color: '#ff9800' },
-  ];
+  ] : [];
 
-  const totalRisk = route.risk_score;
+  const totalRisk = route?.risk_score ?? 0;
   const riskClass = totalRisk < 0.3 ? 'risk-low' : totalRisk < 0.6 ? 'risk-medium' : 'risk-high';
 
   return (

@@ -7,7 +7,9 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    cesium(), // Handles Cesium static assets, CESIUM_BASE_URL, Workers
+    // vite-plugin-cesium: copies Cesium static assets, sets CESIUM_BASE_URL,
+    // externalizes 'cesium' → window.Cesium, and injects Cesium.js + widgets.css into HTML
+    cesium(),
   ],
   resolve: {
     alias: {
@@ -27,18 +29,19 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 5000, // Cesium is large
+    chunkSizeWarningLimit: 5000,
     rollupOptions: {
       output: {
+        // cesium is externalized by vite-plugin-cesium → do NOT list it here
         manualChunks: {
-          cesium: ['cesium'],
           react: ['react', 'react-dom'],
           ui: ['framer-motion', 'recharts'],
         },
       },
     },
   },
+  // Let Vite pre-bundle everything it can (cesium is external, so this is moot for it)
   optimizeDeps: {
-    include: ['cesium', 'resium'],
+    include: ['resium'],
   },
 });

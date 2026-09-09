@@ -21,8 +21,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost"
 
-    # ── External API Keys ────────────────────────────────────
-    cdsapi_url: str = "https://cds.climate.copernicus.eu/api/v2"
+    # ── External & Free APIs ─────────────────────────────────
+    open_meteo_url: str = "https://api.open-meteo.com/v1"
+    cdsapi_url: str = "https://cds.climate.copernicus.eu/api"
     cdsapi_key: str = ""
     earthdata_user: str = ""
     earthdata_pass: str = ""
@@ -43,6 +44,7 @@ class Settings(BaseSettings):
     ice_cache_ttl: int = 6 * 3600       # 6 hours
     iceberg_cache_ttl: int = 12 * 3600  # 12 hours
     ship_cache_ttl: int = 60            # 1 minute
+    weather_cache_ttl: int = 3600       # 1 hour
 
     # ── Model settings ───────────────────────────────────────
     mc_dropout_passes: int = 30
