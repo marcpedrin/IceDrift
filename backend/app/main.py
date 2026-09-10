@@ -14,8 +14,7 @@ from loguru import logger
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import get_settings
-from app.routes import ice, icebergs, ships, navigation, wind, routes as polar_routes
-
+from app.routes import ice, icebergs, ships, navigation, wind, ocean, routes as polar_routes
 
 # ── Startup / Shutdown ─────────────────────────────────────────────────────────
 
@@ -65,7 +64,7 @@ app = FastAPI(
     description=(
         "Antarctic Navigation Decision Support System. "
         "Provides sea-ice forecasting, iceberg tracking, ship AIS data, "
-        "wind field vectors, danger-coded polar routes, "
+        "wind field vectors, ocean currents, danger-coded polar routes, "
         "and A* route optimization for Southern Ocean navigation."
     ),
     version="2.0.0",
@@ -92,6 +91,7 @@ app.include_router(icebergs.router)
 app.include_router(ships.router)
 app.include_router(navigation.router)
 app.include_router(wind.router)
+app.include_router(ocean.router)
 app.include_router(polar_routes.router)
 
 
@@ -107,6 +107,7 @@ async def root():
         "endpoints": {
             "sea_ice": "/ice/forecast",
             "wind_field": "/wind/field",
+            "ocean_currents": "/ocean/currents",
             "icebergs": "/icebergs/all",
             "ships": "/ships/nearby",
             "ws_ships": "/ws/ships",

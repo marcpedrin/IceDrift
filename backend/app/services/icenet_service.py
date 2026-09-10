@@ -87,7 +87,38 @@ class IceNetService:
             self._preload_ingested_grid()
 
     def _preload_ingested_grid(self) -> None:
-        """Load SIC grid from the ingestion service into a fast lookup dict."""
+        """Load SIC grid from NetCDF or JSON into a fast lookup dict."""
+        import xarray as xr
+        import numpy as np
+        
+        nc_path = Path("data/sic.nc")
+        if nc_path.exists():
+            try:
+                logger.info(f"Loading SIC NetCDF from {nc_path}")
+                ds = xr.open_dataset(nc_path)
+                
+                # Try to find the concentration variable (usually seaice_conc_cdr or sea_ice_concentration)
+                conc_var = next((v for v in ['seaice_conc_cdr', 'sea_ice_concentration', 'concentration'] if v in ds.variables), None)
+                if conc_var and 'latitude' in ds.variables and 'longitude' in ds.variables:
+                    # Flatten the arrays to extract non-zero concentration
+                    # NSIDC CDR uses 0-1 for conc, >1 for land/missing
+                    conc = ds[conc_var].values.flatten()
+                    lat = ds['latitude'].values.flatten()
+                    lon = ds['longitude'].values.flatten()
+                    
+                    for c, la, lo in zip(conc, lat, lon):
+                        if not np.isnan(c) and 0.01 < c <= 1.0:
+                            # Use nearest 0.5 deg index to match the physics grid resolution
+                            self._ingested_grid[(round(la * 2) / 2, round(lo * 2) / 2)] = (float(c), 0.05)
+                            
+                self._ingested_timestamp = datetime.utcnow()
+                logger.info("IceNet: loaded {} SIC cells from NetCDF", len(self._ingested_grid))
+                if self._ingested_grid:
+                    return
+            except Exception as exc:
+                logger.warning(f"Failed to parse NetCDF: {exc}. Falling back to JSON.")
+                
+        # Fallback to JSON ingestion
         try:
             from app.services.ingestion_service import get_ingestion
             ingestion = get_ingestion()
@@ -101,9 +132,9 @@ class IceNetService:
                     for c in cells
                 }
                 self._ingested_timestamp = datetime.utcnow()
-                logger.info("IceNet: loaded {} SIC cells from ingested grid", len(self._ingested_grid))
+                logger.info("IceNet: loaded {} SIC cells from ingested JSON grid", len(self._ingested_grid))
         except Exception as exc:
-            logger.warning("Could not pre-load ingested SIC grid: {}", exc)
+            logger.warning("Could not pre-load ingested SIC JSON grid: {}", exc)
 
     def _build_icenet_unet(self):
         """Build IceNet U-Net architecture for pretrained weight loading."""

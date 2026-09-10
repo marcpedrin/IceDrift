@@ -23,6 +23,8 @@ const LAYER_ITEMS: { key: keyof LayerState; label: string; color: string; icon: 
   { key: 'uncertainty', label: 'Uncertainty Cones', color: '#7fb3ff', icon: '◎' },
   { key: 'ships', label: 'Ship Tracking', color: '#00e676', icon: '⛴️' },
   { key: 'routes', label: 'Routes', color: '#00e676', icon: '🗺' },
+  { key: 'wind', label: 'Wind Field', color: '#b2dfdb', icon: '💨' },
+  { key: 'currents', label: 'Ocean Currents', color: '#00bfa5', icon: '🌊' },
 ];
 
 const SHIP_PROFILES: { value: IceClass; label: string }[] = [

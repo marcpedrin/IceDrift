@@ -123,8 +123,13 @@ graph TB
   | **Ice Class 1A** | $\le 70\%$ | $1.2\times$ | Heavy ice conditions |
   | **Ice Class 1AS** | $\le 85\%$ | $1.1\times$ | Severe polar pack ice |
   | **Icebreaker** | $\le 100\%$ | $1.0\times$ | Full polar icebreaking capability |
-* **Bathymetric Safety**: Rejects or severely penalizes waypoints where water depth from GEBCO netCDF falls below vessel draft safety margins (default $20\text{ m}$).
-* **Replanning**: `/navigation/replan` recalculates the route from the ship's current position if ice drift blocks forward segments.
+### 3.5 Ocean Wind, Currents & Specialized Resium Visualization Layers
+* **NOAA GFS GRIB2 Pipeline**: `backend/scripts/parse_grib.py` processes raw binary GRIB2 files (10m $u$ and $v$ wind components) via `xarray` and `cfgrib`, outputting structured JSON arrays matching the `cesium-wind-layer` standard.
+* **Particle Stream Animation**: `WindLayerResium.tsx` uses WebGL GPU acceleration to animate high-density wind stream particles styled with a 15-color `earth.nullschool.net` gradient.
+* **Declarative Resium Components**:
+  * `ShippingLanesResium.tsx`: Renders global maritime navigation tracks via `GeoJsonDataSource` styled with `PolylineGlowMaterialProperty` and terrain clamping.
+  * `IcebergsResium.tsx`: High-performance point rendering utilizing `PointPrimitiveCollection` with picking metadata for responsive user interactions.
+* **Drift Vector Mathematics**: `backend/scripts/process_icebergs.py` calculates distance and spherical initial bearing between sequential observation points for accurate velocity and drift direction assignment.
 
 ---
 
@@ -164,7 +169,9 @@ IceDrift/
 │   ├── checkpoints/               # Directory for IceNet & DRIFT weights
 │   ├── data/                      # Local datasets (GEBCO netCDF, iceberg tracks)
 │   ├── scripts/
-│   │   └── download_data.py       # Automated dataset downloader
+│   │   ├── download_data.py       # Automated dataset downloader
+│   │   ├── process_icebergs.py    # Raw USNIC CSV drift heading/speed vector processor
+│   │   └── parse_grib.py          # NOAA GFS GRIB2 to cesium-wind-layer JSON converter
 │   └── app/
 │       ├── main.py                # FastAPI lifecycle, middleware, router mounts
 │       ├── models/
@@ -208,11 +215,14 @@ IceDrift/
         │   └── useCesiumViewer.ts # Cesium camera fly-to and viewport utilities
         └── components/
             ├── Globe/
-            │   ├── CesiumGlobe.tsx     # 3D globe root, event handlers, click picking
-            │   ├── IceHeatmapLayer.tsx # Sea ice concentration visual overlay
-            │   ├── IcebergLayer.tsx    # Iceberg billboards, tracks & uncertainty cones
-            │   ├── ShipLayer.tsx       # AIS vessel markers, headings & trails
-            │   └── RouteLayer.tsx      # A* calculated route polyline & waypoints
+            │   ├── CesiumGlobe.tsx           # 3D globe root, event handlers, click picking
+            │   ├── IceHeatmapLayer.tsx       # Sea ice concentration visual overlay
+            │   ├── IcebergLayer.tsx          # Iceberg billboards, tracks & uncertainty cones
+            │   ├── ShipLayer.tsx             # AIS vessel markers, headings & trails
+            │   ├── RouteLayer.tsx            # A* calculated route polyline & waypoints
+            │   ├── IcebergsResium.tsx        # Resium PointPrimitiveCollection layer
+            │   ├── ShippingLanesResium.tsx   # Resium GeoJsonDataSource glowing polylines
+            │   └── WindLayerResium.tsx       # GPU-accelerated cesium-wind-layer integration
             ├── Sidebar/
             │   └── Sidebar.tsx         # Route planning form, layer switches, stats
             ├── Popups/

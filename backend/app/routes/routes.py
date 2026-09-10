@@ -14,8 +14,21 @@ from app.services.cache_service import get_cache
 from app.services.ingestion_service import get_ingestion, get_route_scorer
 from app.services.icenet_service import get_icenet
 
+from fastapi.responses import JSONResponse
+import json
+from pathlib import Path
+
 router = APIRouter(prefix="/routes", tags=["Polar Routes"])
 
+@router.get("/geojson")
+async def get_polar_routes_geojson():
+    """Return raw polar routes as GeoJSON for Cesium."""
+    geojson_path = Path("data/polar_routes.geojson")
+    if geojson_path.exists():
+        with open(geojson_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return JSONResponse(content=data)
+    return JSONResponse(content={"error": "Not found"}, status_code=404)
 
 @router.get("/polar", response_model=PolarRoutesResponse)
 async def get_polar_routes(

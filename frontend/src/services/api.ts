@@ -58,6 +58,18 @@ export async function fetchNearbyShips(lat = -65.0, lon = 0.0, radiusNm = 2000):
   return data;
 }
 
+// ── Weather / Wind ────────────────────────────────────────────────────────────
+
+export async function fetchWindField(): Promise<any> {
+  const { data } = await client.get<any>('/wind/field');
+  return data;
+}
+
+export async function fetchOceanCurrents(): Promise<any> {
+  const { data } = await client.get<any>('/ocean/currents');
+  return data;
+}
+
 // ── Navigation ────────────────────────────────────────────────────────────────
 
 export async function planRoute(req: RouteRequest): Promise<Route> {

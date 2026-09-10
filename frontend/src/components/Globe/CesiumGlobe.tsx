@@ -5,12 +5,16 @@ import { IceHeatmapLayer } from './IceHeatmapLayer';
 import { IcebergLayer } from './IcebergLayer';
 import { ShipLayer } from './ShipLayer';
 import { RouteLayer } from './RouteLayer';
+import { WindLayerResium } from './WindLayerResium';
+import { ShippingLanesResium } from './ShippingLanesResium';
 
 interface CesiumGlobeProps {
   iceCells: IceCell[];
   iceOpacity: number;
   icebergs: Iceberg[];
   ships: Ship[];
+  windData: any;
+  currentsData: any;
   route: Route | null;
   layers: LayerState;
   onIcebergClick: (iceberg: Iceberg) => void;
@@ -25,6 +29,8 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
   iceOpacity,
   icebergs,
   ships,
+  windData,
+  currentsData,
   route,
   layers,
   onIcebergClick,
@@ -200,6 +206,40 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
               viewer={localViewerRef.current}
               route={route}
               onRouteClick={onRouteClick}
+            />
+          )}
+          {layers.routes && (
+            <ShippingLanesResium
+              viewer={localViewerRef.current}
+              url={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/routes/geojson`}
+              show={layers.routes}
+            />
+          )}
+          {layers.wind && (
+            <WindLayerResium
+              viewer={localViewerRef.current}
+              data={windData}
+              show={layers.wind}
+            />
+          )}
+          {layers.currents && (
+            <WindLayerResium
+              viewer={localViewerRef.current}
+              data={currentsData}
+              show={layers.currents}
+              options={{
+                windOptions: {
+                  colorScale: [
+                    'rgb(0, 50, 100)',
+                    'rgb(0, 100, 150)',
+                    'rgb(0, 150, 200)',
+                    'rgb(50, 200, 250)',
+                    'rgb(100, 250, 255)'
+                  ],
+                  velocityScale: 0.05,
+                  lineWidth: 3,
+                }
+              }}
             />
           )}
         </>

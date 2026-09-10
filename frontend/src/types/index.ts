@@ -131,6 +131,8 @@ export interface LayerState {
   ships: boolean;
   routes: boolean;
   uncertainty: boolean;
+  wind: boolean;
+  currents: boolean;
 }
 
 export interface AppState {

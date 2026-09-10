@@ -10,7 +10,7 @@ import { ShipPopup } from '@/components/Popups/ShipPopup';
 import { RoutePopup } from '@/components/Popups/RoutePopup';
 import { Legend } from '@/components/Legend/Legend';
 
-import { fetchIceForecast, fetchIcebergs, planRoute } from '@/services/api';
+import { fetchIceForecast, fetchIcebergs, fetchWindField, fetchOceanCurrents, planRoute } from '@/services/api';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useCesiumViewer } from '@/hooks/useCesiumViewer';
 
@@ -26,6 +26,8 @@ const DEFAULT_LAYERS: LayerState = {
   ships: true,
   routes: true,
   uncertainty: false,
+  wind: false, // Turn wind off by default so they don't clash
+  currents: true, // Turn currents on by default
 };
 
 function App() {
@@ -61,6 +63,20 @@ function App() {
     queryKey: ['icebergs'],
     queryFn: () => fetchIcebergs(72),
     refetchInterval: 12 * 60 * 60 * 1000, // 12 hours
+    retry: 2,
+  });
+
+  const { data: windData } = useQuery({
+    queryKey: ['windField'],
+    queryFn: () => fetchWindField(),
+    refetchInterval: 12 * 60 * 60 * 1000,
+    retry: 2,
+  });
+
+  const { data: currentsData } = useQuery({
+    queryKey: ['oceanCurrents'],
+    queryFn: () => fetchOceanCurrents(),
+    refetchInterval: 12 * 60 * 60 * 1000,
     retry: 2,
   });
 
@@ -162,6 +178,8 @@ function App() {
         iceOpacity={state.iceOpacity}
         icebergs={icebergData?.icebergs ?? []}
         ships={ships}
+        windData={windData}
+        currentsData={currentsData}
         route={state.currentRoute}
         layers={state.layers}
         onIcebergClick={handleIcebergClick}
