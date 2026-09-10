@@ -89,17 +89,20 @@ function App() {
     setState((s) => ({ ...s, selectedRoute: route }));
   }, []);
 
-  const handleFindRoute = useCallback(async () => {
-    const { startPoint, endPoint, shipProfile } = state;
-    if (!startPoint || !endPoint) return;
+  const handleFindRoute = useCallback(async (startLat?: number, startLon?: number, endLat?: number, endLon?: number) => {
+    const sPt = (startLat !== undefined && startLon !== undefined) ? {lat: startLat, lon: startLon} : state.startPoint;
+    const ePt = (endLat !== undefined && endLon !== undefined) ? {lat: endLat, lon: endLon} : state.endPoint;
+    const { shipProfile } = state;
+    
+    if (!sPt || !ePt) return;
 
-    setState((s) => ({ ...s, isLoadingRoute: true }));
+    setState((s) => ({ ...s, isLoadingRoute: true, startPoint: sPt, endPoint: ePt }));
     try {
       const route = await planRoute({
-        start_lat: startPoint.lat,
-        start_lon: startPoint.lon,
-        end_lat: endPoint.lat,
-        end_lon: endPoint.lon,
+        start_lat: sPt.lat,
+        start_lon: sPt.lon,
+        end_lat: ePt.lat,
+        end_lon: ePt.lon,
         ship_type: shipProfile,
         avoid_icebergs: true,
       });
@@ -114,7 +117,7 @@ function App() {
       console.error('Route planning failed:', err);
       setState((s) => ({ ...s, isLoadingRoute: false }));
     }
-  }, [state, zoomToRoute]);
+  }, [state.startPoint, state.endPoint, state.shipProfile, zoomToRoute]);
 
   const handleReplan = useCallback(() => {
     setState((s) => ({ ...s, currentRoute: null }));

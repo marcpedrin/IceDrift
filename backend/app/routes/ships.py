@@ -68,7 +68,7 @@ async def get_nearby_ships(
         return ShipListResponse(**cached)
 
     ais = get_ais()
-    raw_ships = await ais.get_nearby_ships(lat=lat, lon=lon, radius_nm=radius_nm)
+    raw_ships = await ais.get_nearby_ships(lat=lat, lon=lon, radius_km=radius_nm * 1.852)
 
     ships = [ShipResponse(**s) for s in raw_ships]
     response = ShipListResponse(count=len(ships), ships=ships, timestamp=datetime.utcnow())

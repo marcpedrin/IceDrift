@@ -10,7 +10,7 @@ interface SidebarProps {
   onShipProfileChange: (v: IceClass) => void;
   onStartChange: (lat: string, lon: string) => void;
   onEndChange: (lat: string, lon: string) => void;
-  onFindRoute: () => void;
+  onFindRoute: (startLat?: number, startLon?: number, endLat?: number, endLon?: number) => void;
   onReplan: () => void;
   isConnected: boolean;
   lastShipUpdate: string | null;
@@ -56,7 +56,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleFindRoute = () => {
     onStartChange(startLat, startLon);
     onEndChange(endLat, endLon);
-    onFindRoute();
+    const sLat = parseFloat(startLat);
+    const sLon = parseFloat(startLon);
+    const eLat = parseFloat(endLat);
+    const eLon = parseFloat(endLon);
+    if (!isNaN(sLat) && !isNaN(sLon) && !isNaN(eLat) && !isNaN(eLon)) {
+      onFindRoute(sLat, sLon, eLat, eLon);
+    } else {
+      onFindRoute();
+    }
   };
 
   return (

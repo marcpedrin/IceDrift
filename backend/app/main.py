@@ -14,7 +14,7 @@ from loguru import logger
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import get_settings
-from app.routes import ice, icebergs, ships, navigation
+from app.routes import ice, icebergs, ships, navigation, wind, routes as polar_routes
 
 
 # ── Startup / Shutdown ─────────────────────────────────────────────────────────
@@ -34,14 +34,19 @@ async def lifespan(app: FastAPI):
     cache = get_cache()
     await cache.connect()
 
-    # Pre-load models (non-blocking – logs warnings if weights missing)
+    # Initialize ingestion service (loads grids, triggers refresh if stale)
+    from app.services.ingestion_service import get_ingestion
+    ingestion = get_ingestion()
+    await ingestion.initialize()
+
+    # Pre-load ML models (non-blocking – logs warnings if weights missing)
     from app.services.icenet_service import get_icenet
     from app.services.drift_service import get_drift
     from app.services.bathymetry_service import get_bathymetry
 
-    get_icenet()   # loads or falls back
-    get_drift()    # loads or falls back
-    get_bathymetry()  # loads GEBCO or falls back
+    get_icenet()
+    get_drift()
+    get_bathymetry()
 
     logger.info("All services initialized.")
     yield
@@ -60,9 +65,10 @@ app = FastAPI(
     description=(
         "Antarctic Navigation Decision Support System. "
         "Provides sea-ice forecasting, iceberg tracking, ship AIS data, "
+        "wind field vectors, danger-coded polar routes, "
         "and A* route optimization for Southern Ocean navigation."
     ),
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -85,6 +91,8 @@ app.include_router(ice.router)
 app.include_router(icebergs.router)
 app.include_router(ships.router)
 app.include_router(navigation.router)
+app.include_router(wind.router)
+app.include_router(polar_routes.router)
 
 
 # ── Root ──────────────────────────────────────────────────────────────────────
@@ -93,7 +101,16 @@ app.include_router(navigation.router)
 async def root():
     return {
         "name": "IceNavigator API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "docs": "/docs",
         "health": "/health",
+        "endpoints": {
+            "sea_ice": "/ice/forecast",
+            "wind_field": "/wind/field",
+            "icebergs": "/icebergs/all",
+            "ships": "/ships/nearby",
+            "ws_ships": "/ws/ships",
+            "polar_routes": "/routes/polar",
+            "navigation": "/navigation/route",
+        },
     }

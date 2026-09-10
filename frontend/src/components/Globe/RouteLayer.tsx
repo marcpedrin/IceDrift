@@ -57,20 +57,33 @@ export function RouteLayer({ viewer, route, onRouteClick }: RouteLayerProps) {
       });
     }
 
-    // Waypoint circles (color = risk)
+    // Waypoint circles
     for (let i = 0; i < route.waypoints.length; i++) {
       const wp = route.waypoints[i];
-      const isEndpoint = i === 0 || i === route.waypoints.length - 1;
-      const color = riskToColor(wp.risk_score);
+      const isStart = i === 0;
+      const isEnd = i === route.waypoints.length - 1;
+      const isEndpoint = isStart || isEnd;
+      
+      let fillColor;
+      let outlineColor = Cesium.Color.WHITE;
+      
+      if (isStart) {
+        fillColor = new Cesium.Color(0, 0.9, 0.42, 1); // Green
+      } else if (isEnd) {
+        fillColor = new Cesium.Color(1, 0.27, 0.27, 1); // Red
+      } else {
+        fillColor = riskToColor(wp.risk_score);
+        outlineColor = Cesium.Color.WHITE.withAlpha(0.5);
+      }
 
       ds.entities.add({
         id: `waypoint-${i}`,
         position: Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat),
         point: {
-          pixelSize: isEndpoint ? 12 : 5,
-          color: isEndpoint ? Cesium.Color.WHITE : color,
-          outlineColor: isEndpoint ? color : Cesium.Color.WHITE.withAlpha(0.5),
-          outlineWidth: isEndpoint ? 2 : 1,
+          pixelSize: isEndpoint ? 16 : 5,
+          color: fillColor,
+          outlineColor: outlineColor,
+          outlineWidth: isEndpoint ? 3 : 1,
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
           disableDepthTestDistance: Number.POSITIVE_INFINITY,
           scaleByDistance: new Cesium.NearFarScalar(1e4, 2.0, 8e6, 0.4),

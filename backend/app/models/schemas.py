@@ -29,6 +29,12 @@ class IceClass(str, Enum):
     ICEBREAKER = "icebreaker"
 
 
+class RiskLevel(str, Enum):
+    SAFE = "safe"          # Green  — SIC < 20%, no icebergs nearby
+    MODERATE = "moderate"  # Yellow — SIC 20-60% or iceberg >50km
+    HIGH = "high"          # Red    — SIC > 60% or iceberg < 50km or bathymetry risk
+
+
 # ─────────────────────────── Ice Forecast ─────────────────────────────────────
 
 class IceCellResponse(BaseModel):
@@ -44,6 +50,26 @@ class IceForecastResponse(BaseModel):
     cells: list[IceCellResponse]
     model_version: str = "icenet-v2"
     source: str = "IceNet pretrained"
+
+
+# ─────────────────────────── Wind Field ───────────────────────────────────────
+
+class WindCell(BaseModel):
+    lat: float
+    lon: float
+    u10: float = Field(..., description="Eastward wind component m/s")
+    v10: float = Field(..., description="Northward wind component m/s")
+    speed_ms: float = Field(..., ge=0.0, description="Wind speed magnitude m/s")
+    direction_deg: float = Field(..., ge=0.0, le=360.0, description="Meteorological wind direction")
+    source: str = "Open-Meteo ERA5"
+
+
+class WindFieldResponse(BaseModel):
+    timestamp: datetime
+    source: str
+    resolution_deg: float = 1.0
+    cells: list[WindCell]
+    bbox: dict[str, float]
 
 
 # ─────────────────────────── Icebergs ─────────────────────────────────────────
@@ -107,6 +133,47 @@ class ShipListResponse(BaseModel):
     timestamp: datetime
 
 
+# ─────────────────────────── Polar Routes ────────────────────────────────────
+
+class RouteSegmentRisk(BaseModel):
+    """Risk assessment for a single 50km segment of a polar route corridor."""
+    seg_id: str
+    start_lat: float
+    start_lon: float
+    end_lat: float
+    end_lon: float
+    center_lat: float
+    center_lon: float
+    length_km: float
+    risk_level: RiskLevel = RiskLevel.SAFE
+    risk_score: float = Field(0.0, ge=0.0, le=1.0, description="Composite risk 0–1")
+    ice_concentration: float = Field(0.0, ge=0.0, le=1.0)
+    iceberg_proximity_km: Optional[float] = None
+    depth_m: Optional[float] = None
+    notes: str = ""
+
+
+class PolarRouteResponse(BaseModel):
+    """A named Antarctic supply corridor with per-segment danger coding."""
+    route_id: str
+    name: str
+    route_type: str
+    distance_km: float
+    typical_vessel: str
+    overall_risk: RiskLevel = RiskLevel.SAFE
+    overall_risk_score: float = 0.0
+    segments: list[RouteSegmentRisk]
+    waypoints: list[dict[str, float]]   # [{"lat": ..., "lon": ...}]
+    timestamp: datetime
+
+
+class PolarRoutesResponse(BaseModel):
+    count: int
+    routes: list[PolarRouteResponse]
+    timestamp: datetime
+    ice_forecast_age_hours: Optional[float] = None
+
+
 # ─────────────────────────── Navigation ───────────────────────────────────────
 
 class RouteRequest(BaseModel):
@@ -159,7 +226,17 @@ class ReplanRequest(BaseModel):
     ship_type: IceClass = IceClass.ICE_CLASS_1A
 
 
-# ─────────────────────────── Health ───────────────────────────────────────────
+# ─────────────────────────── Health & Ingestion Status ────────────────────────
+
+class IngestionStatus(BaseModel):
+    last_run: Optional[datetime] = None
+    icebergs_loaded: int = 0
+    sic_cells_loaded: int = 0
+    wind_cells_loaded: int = 0
+    routes_loaded: int = 0
+    gebco_available: bool = False
+    data_age_hours: Optional[float] = None
+
 
 class HealthResponse(BaseModel):
     status: str
@@ -167,3 +244,4 @@ class HealthResponse(BaseModel):
     timestamp: datetime
     services: dict[str, str]
     models: dict[str, str]
+    ingestion: Optional[IngestionStatus] = None

@@ -40,7 +40,7 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
   useEffect(() => {
     if (!containerRef.current || localViewerRef.current) return;
 
-    // ── Set Ion token if available ─────────────────────────────────────────
+    // ── Optional Ion token ─────────────────────────────────────────────────
     const cesiumToken = import.meta.env.VITE_CESIUM_TOKEN;
     const hasValidToken =
       cesiumToken &&
@@ -51,7 +51,7 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
       Cesium.Ion.defaultAccessToken = cesiumToken;
     }
 
-    // ── Create Viewer (no baseLayer option – we manage imagery manually) ───
+    // ── Viewer: no base layer (we add our own satellite imagery below) ─────
     const viewer = new Cesium.Viewer(containerRef.current, {
       baseLayerPicker: false,
       geocoder: false,
@@ -65,48 +65,47 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
       infoBox: false,
       shouldAnimate: true,
       requestRenderMode: false,
-      maximumRenderTimeChange: Infinity,
-      // ── FREE terrain: flat ellipsoid, no Ion token required ────────────
-      // Without this, Cesium defaults to CesiumWorldTerrain which
-      // requires a valid Ion token and throws auth errors without one.
+      // Flat terrain — no Ion token needed, no auth errors
       terrainProvider: new Cesium.EllipsoidTerrainProvider(),
     });
 
-    // ── Replace default imagery with a free provider ───────────────────────
-    // Remove all default layers (Bing Maps requires API key — skip it)
+    // ── Remove any auto-added default imagery ─────────────────────────────
     viewer.imageryLayers.removeAll();
 
-    if (hasValidToken) {
-      // Cesium Ion World Imagery – free tier, high quality
-      Cesium.createWorldImageryAsync()
-        .then((provider) => {
-          if (!viewer.isDestroyed()) {
-            viewer.imageryLayers.addImageryProvider(provider);
-          }
-        })
-        .catch(() => {
-          console.warn('[Polaris] Ion imagery failed, falling back to OpenStreetMap');
-          if (!viewer.isDestroyed()) {
-            addOsmLayer(viewer);
-          }
-        });
-    } else {
-      // Free fallback: OpenStreetMap (no key needed)
-      addOsmLayer(viewer);
-    }
+    // ── ESRI World Imagery — real satellite, completely FREE, no API key ──
+    // This is the same high-res satellite used by ArcGIS/ESRI online maps.
+    viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        credit: new Cesium.Credit('Esri, Maxar, Earthstar Geographics, and the GIS User Community', true),
+        maximumLevel: 19,
+      })
+    );
 
-    // ── Scene config ──────────────────────────────────────────────────────
+    // ── Optional labels overlay (place names) ─────────────────────────────
+    // ESRI Reference overlay is transparent — shows borders/labels on top
+    viewer.imageryLayers.addImageryProvider(
+      new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+        credit: new Cesium.Credit('Esri', false),
+        maximumLevel: 19,
+        // Set alpha low so labels don't overpower satellite
+      })
+    );
+    // Dim the labels layer
+    viewer.imageryLayers.get(1).alpha = 0.35;
+
+    // ── Scene tweaks ──────────────────────────────────────────────────────
     viewer.scene.globe.enableLighting = false;
     viewer.scene.globe.showGroundAtmosphere = true;
     viewer.scene.fog.enabled = true;
-    viewer.scene.fog.density = 0.0001;
-
-    // Dark ocean/polar tint
-    viewer.scene.globe.baseColor = new Cesium.Color(0.04, 0.08, 0.15, 1.0);
+    viewer.scene.fog.density = 0.00012;
+    // Dark sky
+    viewer.scene.backgroundColor = new Cesium.Color(0.02, 0.04, 0.08, 1.0);
 
     // ── Fly to Antarctic overview ─────────────────────────────────────────
     viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(0, -70, 14_000_000),
+      destination: Cesium.Cartesian3.fromDegrees(0, -70, 16_000_000),
       orientation: {
         heading: 0,
         pitch: Cesium.Math.toRadians(-90),
@@ -114,20 +113,21 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
       },
     });
 
-    // Animate in after a brief delay
+    // Animate in
     setTimeout(() => {
       if (!viewer.isDestroyed()) {
         viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(0, -70, 10_000_000),
+          destination: Cesium.Cartesian3.fromDegrees(0, -75, 11_000_000),
           orientation: {
             heading: 0,
             pitch: Cesium.Math.toRadians(-90),
             roll: 0,
           },
           duration: 2.5,
+          easingFunction: Cesium.EasingFunction.SINUSOIDAL_IN_OUT,
         });
       }
-    }, 500);
+    }, 400);
 
     localViewerRef.current = viewer;
     viewerRef.current = viewer;
@@ -157,13 +157,9 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
 
     return () => {
       handler.destroy();
-      if (!viewer.isDestroyed()) {
-        viewer.destroy();
-      }
+      if (!viewer.isDestroyed()) viewer.destroy();
       localViewerRef.current = null;
       viewerRef.current = null;
-      // Do NOT call setViewerReady(false) here – setting state on an
-      // unmounting component causes React reconciler errors.
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -171,8 +167,11 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
     <div className="absolute inset-0">
       <div ref={containerRef} className="w-full h-full" id="cesium-globe" />
 
+      {/* Layer renderers — rendered as React portals into Cesium's scene.
+          Must be mounted AFTER viewer is ready. Hidden div is fine — these
+          components add entities/primitives directly to the Cesium viewer. */}
       {viewerReady && localViewerRef.current && (
-        <div style={{ display: 'none' }}>
+        <>
           {layers.iceHeatmap && (
             <IceHeatmapLayer
               viewer={localViewerRef.current}
@@ -203,36 +202,8 @@ export const CesiumGlobe: React.FC<CesiumGlobeProps> = ({
               onRouteClick={onRouteClick}
             />
           )}
-        </div>
+        </>
       )}
     </div>
   );
 };
-
-// ── Helper: add OSM free imagery ────────────────────────────────────────────
-function addOsmLayer(viewer: Cesium.Viewer) {
-  try {
-    // UrlTemplateImageryProvider works in all modern Cesium versions
-    viewer.imageryLayers.addImageryProvider(
-      new Cesium.UrlTemplateImageryProvider({
-        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        subdomains: ['a', 'b', 'c'],
-        credit: new Cesium.Credit('© OpenStreetMap contributors', true),
-        maximumLevel: 19,
-      })
-    );
-  } catch {
-    // Last resort: use Cesium's built-in NaturalEarth imagery (offline, no network)
-    try {
-      Cesium.TileMapServiceImageryProvider.fromUrl(
-        Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-      ).then((provider) => {
-        if (!viewer.isDestroyed()) {
-          viewer.imageryLayers.addImageryProvider(provider);
-        }
-      });
-    } catch {
-      console.warn('[Polaris] All imagery providers failed – globe will show terrain only');
-    }
-  }
-}
